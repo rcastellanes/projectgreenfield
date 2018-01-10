@@ -1,0 +1,169 @@
+<html lang="en-US" xmlns="http://www.w3.org/1999/xhtml">
+   <head profile="http://gmpg.org/xfn/11">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+      <link rel="stylesheet" type="text/css" href="bootstrap.css">
+      <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js'></script>
+      <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js'></script>
+      <script src="jquery.csv.min.js"></script>
+      <script src="bootstrap.min.js"></script>
+      <script src="choropleth.js"></script>
+      <script type="text/javascript">
+         $(document).ready(function(){
+            $("#myModal").modal('show');
+            });
+      </script>
+   </head>
+   
+   <body>
+      <div class = row>
+         <div class = "col-sm-1 text-left">
+         </div>
+         <div class = "col-sm-10 text-left">
+            <h1>Best Location for a New Business App</h1>
+            <p>Results by Score (0 to 1)</p>
+            <!-- Trigger/Open The Modal -->
+            <button id="myBtn" data-toggle="modal" data-target="#myModal">Update Weights</button>
+            <!-- The Modal -->
+            <div id="myModal" class="modal fade">       
+               <!-- Modal content -->
+               <div class="modal-dialog">
+                  <div class="modal-content">
+                     <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Best Location for a New Business App</h4>
+                        <p>Select each feature's importance from 1 (lowest) to 5 (highest).</p>
+                     </div>
+                     <div class="modal-body">
+                        <div class = "row">
+                           <div class = "col-sm-4 text-left">
+                              <p>Competition</p>
+                              <input type="range" value="3.0" step="1.0" min="1.0" max="5.0" oninput="outputUpdate1(value)" id="WtCompetition">
+                              <output for="WtCompetition" id=imp1>3</output>
+                                 <script>
+                                 function outputUpdate1(vol) {
+                                    document.querySelector('#imp1').value = vol;
+                                 }
+                                 </script>
+                              <p>Rent</p>
+                              <input type="range" value="3.0" step="1.0" min="1.0" max="5.0" oninput="outputUpdate2(value)" id="WtRent">
+                              <output for="WtRent" id=imp2>3</output>
+                                 <script>
+                                 function outputUpdate2(vol) {
+                                    document.querySelector('#imp2').value = vol;
+                                 }
+                                 </script>
+                           </div>
+                           <div class = "col-sm-4 text-left">
+                              <p>Connectivity</p>
+                              <input type="range" value="3.0" step="1.0" min="1.0" max="5.0" oninput="outputUpdate3(value)"  id="WtConnectivity">
+                              <output for="WtConnectivity" id=imp3>3</output>
+                                 <script>
+                                 function outputUpdate3(vol) {
+                                    document.querySelector('#imp3').value = vol;
+                                 }
+                                 </script>
+                              <p>Social Media Prominence</p>
+                              <input type="range" value="3.0" step="1.0" min="1.0" max="5.0" oninput="outputUpdate4(value)"  id="WtPopularity">
+                              <output for="WtPopularity" id=imp4>3</output>     
+                                 <script>
+                                 function outputUpdate4(vol) {
+                                    document.querySelector('#imp4').value = vol;
+                                 }
+                                 </script>                         
+                              <br>
+                              <br>
+                              <button type="submit" class="btn btn-primary" onclick = "update()">Submit</button>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class = "row">
+         <div class = "col-sm-1 text-left">
+         </div>
+         <div class = "col-sm-10 text-left">
+            <div id="map" style="width: 800px; height: 500px; border: 1px solid #AAA;"></div>
+            <script type='text/javascript'>
+               var map = L.map( 'map').setView([40.768565,-73.961597],13);
+               
+               L.tileLayer( 'https://api.mapbox.com/styles/v1/rcastellanes/cjb22z4ui7jfz2stqtdw2f2kg/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoicmNhc3RlbGxhbmVzIiwiYSI6IkVRd0dDaVEifQ.EsWXaa4BxE2qtGQ658rXqQ', {
+                  attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">MapBox</a>'
+               }).addTo( map );
+            //</script>
+            <script>
+            function update() {
+               var totalWeight = parseFloat($("#WtCompetition").val()) + parseFloat($("#WtRent").val()) + parseFloat($("#WtConnectivity").val()) + parseFloat($("#WtPopularity").val());
+               var WtCompetition = 0.8 * parseFloat($("#WtCompetition").val()) / totalWeight;
+               var WtRent = 0.8* parseFloat($("#WtRent").val()) / totalWeight;
+               var WtConnectivity = 0.8* parseFloat($("#WtConnectivity").val()) / totalWeight;
+               var WtPopularity = 0.8* parseFloat($("#WtPopularity").val()) / totalWeight;
+               $('#myModal').modal('hide');
+
+               
+               $.get('https://amla26.github.io/columbia_capstone_2017/nyc-check-ins/final_viz_mh_df.csv', function(data) {mapData(data);
+                        });
+               
+               function getColor(d) {
+                        return d > 0.8875 ? '#005824' :
+                        d > 0.825 ? '#238B45' :
+                        d > 0.750 ? '#41AE76' :
+                        d > 0.6875 ? '#66C2A4' :
+                        d > 0.625 ? '#99D8C9' :
+                        d > 0.500 ? '#CCECE6' :
+                        d > 0.250 ? '#E5f5F9' :
+                        '#F7FCFD';
+                     }
+                     
+               var legend = L.control({position: 'bottomright'});
+               
+               legend.onAdd = function (map) {
+                  var div = L.DomUtil.create('div', 'info legend'),
+                  grades = [0, 0.25, 0.50, 0.625, 0.6875, 0.75, 0.825, 0.8875],
+                  labels = [];
+                  // loop through our density intervals and generate a label with a colored square for each interval
+                  
+                  for (var i = 0; i < grades.length; i++) {
+                     div.innerHTML += '<i style="background:' + getColor(grades[i] +0.001) + '"></i> ' +
+                     grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+                  }
+                     
+                  return div;
+               };
+               
+               legend.addTo(map);
+               
+               function mapData(data) {
+                  
+                  var dataset = $.csv.toObjects(data);
+                  var datasetLength = dataset.length;
+                  var marker;
+                  
+                  
+                  
+                  for (var i = 0; i < datasetLength; i++) {
+                     var currentDataPoint = dataset[i];
+                     
+                     var weightedscore = WtCompetition * currentDataPoint.competitors + WtPopularity * currentDataPoint.rating + WtRent * currentDataPoint.rent + WtConnectivity * currentDataPoint.sub_count + 0.2 * currentDataPoint.unsupervised_score ;
+
+                     var geojsonMarkerOptions = {
+                        radius: 7,
+                        fillColor: getColor(weightedscore),
+                        color: getColor(weightedscore),
+                        weight: 1,
+                        opacity: 0.8,
+                        fillOpacity: 0.9
+                        }
+                     marker = L.circleMarker([currentDataPoint.latitude, currentDataPoint.longitude], geojsonMarkerOptions);
+                     map.addLayer(marker);
+                  }
+               }
+            }
+            </script>
+         </div>
+      </div>
+   </body>
+</html>
